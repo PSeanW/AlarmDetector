@@ -3,26 +3,23 @@ arduinoFFT FFT = arduinoFFT();
 
 #define SAMPLES 256              //Must be a power of 2
 #define SAMPLING_FREQUENCY 10000 //Hz, must be 10000 or less due to ADC conversion time. Determines maximum frequency that can be analysed by the FFT.
-#define amplitude 5
+//#define amplitude 5
 
 int sensorPin = A0;    // select the input pin for the potentiometer
 int ledPin = D4;      // select the pin for the LED
-int sensorValue = 0;  // variable to store the value coming from the sensor
 
 unsigned int sampling_period_us;
 unsigned long microseconds;
-byte peak[] = {0, 0, 0, 0, 0, 0, 0};
 double vReal[SAMPLES];
 double vImag[SAMPLES];
 unsigned long newTime, oldTime;
+unsigned int count_low = 0;
+unsigned int count_high = 0;
 
 void setup() {
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
   sampling_period_us = round(1000000 * (1.0 / SAMPLING_FREQUENCY));
-  //FFT.Revision();
-  //Serial.println( "0.1 0.2 0.5 1K  2K  4K  8K");
-
 }
 
 void loop() {
@@ -43,22 +40,38 @@ void loop() {
   //double peak = FFT.MajorPeak(vReal, SAMPLES, SAMPLING_FREQUENCY);
   //Serial.print("Peak = ");
   //Serial.println( peak, 6);
-  int val = 0;
+  delay(15);//???delay to stablize the signal???
+  int val;
   _Bool flag = 0;
-  for (int i = 70; i < 76; i++) {
+  for (int i = 66; i < 76; i++) { //70-76 base on test result
     val = (int)vReal[i];
-    if (val > 70) {
+    if (val > 65) {
       flag = 1;
-    } 
+    }
     //Serial.print (i);
     //Serial.print (", ");
     //Serial.println(val);
-    delay(100);
+    delay(50);
   }
-  if(flag == 1){
-    digitalWrite(ledPin, LOW);
-  }else{
-    digitalWrite(ledPin, HIGH);
+  //Serial.println ((int)flag);
+  //set
+  if (flag == 1) {
+    //if (count_high >= 2) {
+      count_low = 0;
+       //Serial.print (count_high);
+      digitalWrite(ledPin, LOW);
+    //} else {
+      //count_high++;
+    //}
+  } else {                    //no alarm detected
+    if (count_low >= 5) {
+      //count_high = 0;
+      digitalWrite(ledPin, HIGH);
+    } else {
+      count_low++;
     }
-    Serial.print ((int)flag);
+  }
+   //Serial.print(count_low);
+   //Serial.print(" @ ");
+   //Serial.println(count_high);
 }
